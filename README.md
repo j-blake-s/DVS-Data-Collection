@@ -1,1 +1,3 @@
-DVS Data Collection Repository
+## Psuedo DVS Effect
+
+A Psuedo DVS effect is achieved by calculating the difference between frames of consecutive images and applying a thresholding effect to generate discrete events. Each event is either an ON event, signifying an increase in brightness, or an OFF event, signifying a decrease in brightness.  First, two consecutive frames are grabbed from an RGB camera and converted to grayscale. Next, we subtract the frames from each other to find the difference in brightness. Given a certain threshold 0 < t < 255, all values between [-t, t] are ignored. Then any remaining values are converted to events. Positive values become ON events and negative values become OFF events. These values are stored as 1s in separate channels. This effect can be seen as a function bringing 2 images of shape (H, W, 3) to 1 event frame of shape (H, W, 2). The most recent video frame is reused in the next calculation to ensure continous frames. 
