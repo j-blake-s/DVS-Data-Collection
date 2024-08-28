@@ -53,6 +53,8 @@ def main(args):
   # Set up frames
   _, frame = cam.read()
   prev = np.ones_like(frame) * frame / 255.
+  IMG_W = prev.shape[0]
+  IMG_H = prev.shape[1]
   base = np.zeros_like(frame)
   print("Running Pseudo-DVS Camera... (press q to quit)")
 
@@ -61,7 +63,7 @@ def main(args):
     frame = np.array(frame, np.float32) / 255.
     base, color = dvs(prev, frame, base,decay=args.d, t=args.t)
     
-    # color = cv2.resize(color, (960, 720), interpolation=cv2.INTER_LINEAR)
+    color = cv2.resize(color, (int(IMG_H*args.s), int(IMG_W*args.s)), interpolation=cv2.INTER_LINEAR)
     cv2.imshow("DVS", color)
 
     prev = frame
@@ -71,6 +73,7 @@ def main(args):
 
 parser = argparse.ArgumentParser('')
 parser.add_argument('-d', type=float, default=0.45)
-parser.add_argument('-t', type=float, default=0.05)
+parser.add_argument('-t', type=float, default=0.1)
+parser.add_argument('-s', type=float, default=2.)
 args = parser.parse_args()
 main(args)
