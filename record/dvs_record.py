@@ -54,10 +54,13 @@ class GUI:
     # cv2.imshow("name", image)
     try:
       pass
-      print(np.shape(image[::2,::2,:]))
+      # print(np.shape(image[::2,::2,:]))
       # img = Image.fromarray(image[::2,::2], 'RGB')
 
+      # After this works
       img = Image.fromarray(image, 'RGB')
+      # img.save("./CHECK.jpg", "JPEG")
+      # print(type(img))
       img_tk = ImageTk.PhotoImage(image = img)
       self.frame.config(image = img_tk)
       self.frame.image = img_tk
@@ -87,7 +90,6 @@ class Camera :
   curr_frame = None
   def __init__(self):
     self.gui = GUI()
-    pass
 
 
   # def run(self):
@@ -99,7 +101,6 @@ class Camera :
 
   def open_cam(self):
     print("Opening Camera...",end="")
-    # HAVE CHANGE IT TO 1
     cam = cv2.VideoCapture(0)
     ret, frame = cam.read()
     # ADDED CODE
@@ -183,6 +184,8 @@ class Camera :
       print(np.shape(frame))
       frame = np.array(frame, np.float32) / 255.
       _, color = self.dvs(prev, frame, t=0.05)    
+
+      # cv2.imshow("Frame", color)
       # print(color)
       # print(type(color))
       self.curr_frame = color
@@ -238,14 +241,9 @@ class Manager:
     thread2 = threading.Thread(target = self.update_loop)
     thread2.start()
 
-    print("IN HERE ")
     self.gui.run()
     # self.gui.update_frame(self.camera.curr_frame)
 
 if __name__ == "__main__":
   manager = Manager()
   manager.run()
-  # manager = CameraManager()
-  # manager.run()
-  # gui = GUI()
-  # gui.run()
