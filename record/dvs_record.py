@@ -35,7 +35,7 @@ class GUI:
     save_button = tk.Button(text = "Submit", command = lambda : self.next_prompt(self.counter))
     save_button.pack()
     # Create a 100x100 white image
-    pil_image = Image.new('RGB', (520, 960), color='black')
+    pil_image = Image.new('RGB', (1080, 1920), color='black')
     dummy_image = ImageTk.PhotoImage(pil_image)
 
     self.frame = tk.Label(self.root, image = dummy_image)
@@ -46,20 +46,14 @@ class GUI:
     self.root.mainloop()
 
   def update_frame(self, image):
-    # print("INSDIE GUI LOOP")
     if (image is None):
       return
-    # print(type(image))
-    # print(np.shape(image))
-    # cv2.imshow("name", image)
-    try:
-      pass
-      # print(np.shape(image[::2,::2,:]))
-      # img = Image.fromarray(image[::2,::2], 'RGB')
 
+    try:
       # After this works
       img = Image.fromarray(image, 'RGB')
-      # img.save("./CHECK.jpg", "JPEG")
+      print("SHAPE" , np.shape(img))
+      img.save("./CHECK.jpg", "JPEG")
       # print(type(img))
       img_tk = ImageTk.PhotoImage(image = img)
       self.frame.config(image = img_tk)
@@ -67,13 +61,9 @@ class GUI:
     except:
       print("INVALID")
 
-  # def update_loop(self):
-  #   while(True):
-  #     self.update_frame()
 
   def next_prompt(self, idx):
     print(self.entry.get())
-    # user_response = self.entry.get()
     self.counter += 1
     self.response_list.append(self.entry.get())
     self.text_label.config(text = (self.question_list[idx] if len(self.question_list) > idx else ""))
@@ -137,30 +127,6 @@ class Camera :
 
 
     return data, color
-
-  # def checkKey(self):
-  #   return cv2.waitKey(1) & 0xFF
-
-  # def settings(self):
-
-  #   print("Hello, Welcome to the DVS Recording Toolbox!")
-  #   # Needs to be replaced with actual labels
-  #   label_list = {1:"l1", 2 : "l2", 3 : "l3", 4 : "l4"}
-  #   while (True):
-  #     num_sec = int(input("How many seconds would you like to record?\n>> "))
-  #     print("Which of the following classes is being recorded?")
-  #     for key, val in label_list.items() :
-  #       print(str(key) + ") " + val)
-  #     label_int= int(input())
-  #     label = label_list[label_int]
-
-  #     user = input(f'You would like to record {num_sec} seconds of class {label}? [y/n]\n>> ')
-  #     if user.lower() == 'y':
-  #       print("Values accepted!") 
-  #       return num_sec, label
-  #     else:
-  #       print("Please reenter values!")
-
     
 
   def camera_collection(self) :
@@ -184,7 +150,13 @@ class Camera :
       print(np.shape(frame))
       frame = np.array(frame, np.float32) / 255.
       _, color = self.dvs(prev, frame, t=0.05)    
-
+      print(type(color))
+      if (color is not None):
+        img = Image.fromarray(frame, 'RGB')
+        print("SHAPE" , np.shape(img))
+        img.save("./CHECK.jpg", "JPEG")
+      #   img = Image.fromarray(color, "RGB")
+      #   img.save("./color_IMG.jpg", color)
       # cv2.imshow("Frame", color)
       # print(color)
       # print(type(color))
@@ -225,7 +197,7 @@ class Manager:
   camera : Camera
 
 
-  def __init__(self) -> None:
+  def __init__(self):
     self.gui = GUI()
     self.camera = Camera()
 
