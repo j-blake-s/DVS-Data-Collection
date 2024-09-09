@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import argparse
 import time
 import tkinter as tk
 from PIL import ImageTk, Image
@@ -8,6 +7,14 @@ import threading
 
 
 
+class CollectionProperties:
+  num_seconds = 0
+  
+
+
+  def set_seconds(self, seconds):
+    if seconds > 0:
+      self.num_seconds = seconds
 
 
 class GUI:
@@ -20,19 +27,21 @@ class GUI:
   frame : tk.Label
 
   def __init__(self):
-    self.question_list = ["How many seconds would you like to record?", "Which of the following classes is being recorded?", "What is your name?"]
+    self.question_list = ["How many seconds would you like to record?", 
+                          "Which of the following classes is being recorded?", 
+                          "What is your name?"]
     self.counter = 0
-    pass
   def run(self):
 
     self.root = tk.Tk()
     self.root.title = "DVS Data Collection"
 
-    self.text_label = tk.Label(master = self.root, text = "Hello, Welcome to the DVS Recording Toolbox!\n Click Submit to start")
+    self.text_label = tk.Label(master = self.root, height= 20, width = 100, borderwidth = 2,relief = "solid",
+                               text = "Hello, Welcome to the DVS Recording Toolbox!\n\n Click Next to start")
     self.text_label.pack() 
     self.entry = tk.Entry(master = self.root)
     self.entry.pack()
-    save_button = tk.Button(text = "Submit", command = lambda : self.next_prompt(self.counter))
+    save_button = tk.Button(text = "Next", command = lambda : self.next_prompt(self.counter))
     save_button.pack()
     # Create a 100x100 white image
     pil_image = Image.new('RGB', (1080, 1920), color='black')
@@ -50,12 +59,7 @@ class GUI:
       return
 
     try:
-      # After this works
-      img = Image.fromarray(image, 'RGB')
-      print("SHAPE" , np.shape(img))
-      img.save("./CHECK.jpg", "JPEG")
-      # print(type(img))
-      img_tk = ImageTk.PhotoImage(image = img)
+      img_tk = ImageTk.PhotoImage(image = image)
       self.frame.config(image = img_tk)
       self.frame.image = img_tk
     except:
@@ -81,13 +85,6 @@ class Camera :
   def __init__(self):
     self.gui = GUI()
 
-
-  # def run(self):
-  #   thread1 = threading.Thread(target = self.camera_collection())
-  #   thread1.start()
-  #   # self.gui.run()
-  #   # self.camera_collection()
-  #   pass
 
   def open_cam(self):
     print("Opening Camera...",end="")
@@ -139,31 +136,21 @@ class Camera :
     num_frames = self.num_sec * fps
     print("FPS" + str(fps), "number of frame: " + str(num_frames))
     data = np.zeros(shape=(num_frames, 2, img_h, img_w), dtype=bool)
-
     # Set up frames
     # print("Opening Preview [Press to (r)ecord or (q)uit. IN THE PREVIEW NOT TERMINAL]")
     _, frame = cam.read()
-    prev = np.ones_like(frame) * frame / 255.
+
+    prev = np.ones_like(frame) * (frame / 255.)
+
     while (True):
       # print("INSIDE THE CAMERA LOOP")
       _, frame = cam.read()
-      print(np.shape(frame))
       frame = np.array(frame, np.float32) / 255.
       _, color = self.dvs(prev, frame, t=0.05)    
-      print(type(color))
-      if (color is not None):
-        img = Image.fromarray(frame, 'RGB')
-        print("SHAPE" , np.shape(img))
-        img.save("./CHECK.jpg", "JPEG")
-      #   img = Image.fromarray(color, "RGB")
-      #   img.save("./color_IMG.jpg", color)
-      # cv2.imshow("Frame", color)
-      # print(color)
-      # print(type(color))
-      self.curr_frame = color
-      # TODO 
-      # self.gui.update_frame(color)
-      # cv2.imshow("Frame", color)
+
+      array_uint8 = (color * 255).astype(np.uint8)
+      img = Image.fromarray(array_uint8)
+      self.curr_frame = img
       prev = frame
       
       # k = self.checkKey()
