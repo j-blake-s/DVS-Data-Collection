@@ -9,12 +9,21 @@ import threading
 
 class CollectionProperties:
   num_seconds = 0
-  
-
+  selected_label = "" 
+  label_dict : dict
+  time_dict : dict
+  def __init__(self) :
+    self.label_dict = {1 : "Label 1", 2 : "Label 2", 3 : "Label 3"}
+    self.time_dict = {1 : "5 seconds", 2 : "7 seconds", 3 : "10 seconds" ,4 : "20 seconds"}
 
   def set_seconds(self, seconds):
     if seconds > 0:
       self.num_seconds = seconds
+
+  def set_label(self, label):
+    self.selected_label = label
+
+
 
 
 class GUI:
@@ -25,12 +34,17 @@ class GUI:
   question_list = []
   response_list = []
   frame : tk.Label
-
+  label_buttons : dict[int, tk.Button]
+  time_buttons : dict[int, tk.Button]
+  properties : CollectionProperties
   def __init__(self):
+    self.label_buttons = {}
+    self.time_buttons = {}
     self.question_list = ["How many seconds would you like to record?", 
                           "Which of the following classes is being recorded?", 
                           "What is your name?"]
     self.counter = 0
+    self.properties = CollectionProperties()
   def run(self):
 
     self.root = tk.Tk()
@@ -41,6 +55,19 @@ class GUI:
     self.text_label.pack() 
     self.entry = tk.Entry(master = self.root)
     self.entry.pack()
+
+    for key, value in self.properties.label_dict.items():
+        button = tk.Button(text = value, command = lambda k = key: self.label_button_action(k, self.label_buttons))
+        button.pack()
+        self.label_buttons[key] = button
+        # button.grid(row = key, column = 0)
+    for key, value in self.properties.time_dict.items():
+
+        button = tk.Button(text = value, command = lambda k = key: self.label_button_action(k, self.time_buttons))
+        button.pack()
+        self.time_buttons[key] = button
+        # button.grid(row = key, column = 1)
+
     save_button = tk.Button(text = "Next", command = lambda : self.next_prompt(self.counter))
     save_button.pack()
     # Create a 100x100 white image
@@ -50,9 +77,25 @@ class GUI:
     self.frame = tk.Label(self.root, image = dummy_image)
 
     self.frame.pack()
+    self.root.grid_columnconfigure(0, weight=1)
+    self.root.grid_columnconfigure(1, weight=1)
 
     self.root.geometry("1000x1000")
     self.root.mainloop()
+
+
+  def label_button_action(self, key, buttons):
+    # print(self.label_buttons)
+    print(key)
+    curr_button = buttons[key]
+    # if curr_button.cget("relief") == tk.SUNKEN
+    curr_button.config(relief=tk.SUNKEN, activebackground = "lightgreen", bg = "green")
+    for dict_key, button in buttons.items():
+      if dict_key != key:
+        button.config(relief = tk.RAISED,bg='#f0f0f0')
+    self.properties.set_label(key)
+    return 
+
 
   def update_frame(self, image):
     if (image is None):
