@@ -50,11 +50,14 @@ class GUI:
     self.root = tk.Tk()
     self.root.title = "DVS Data Collection"
 
-    self.text_label = tk.Label(master = self.root, height= 20, width = 100, borderwidth = 2,relief = "solid",
-                               text = "Hello, Welcome to the DVS Recording Toolbox!\n\n Click Next to start")
-    self.text_label.pack() 
-    self.entry = tk.Entry(master = self.root)
-    self.entry.pack()
+    self.top_frame = tk.Frame(master = self.root, bg = "gray")
+    self.top_frame.pack(expand=True)
+
+    # self.text_label = tk.Label(master = self.root, height= 20, width = 100, borderwidth = 2,relief = "solid",
+    #                            text = "Hello, Welcome to the DVS Recording Toolbox!\n\n Click Next to start")
+    # self.text_label.pack() 
+    # self.entry = tk.Entry(master = self.root)
+    # self.entry.pack()
 
     for key, value in self.properties.label_dict.items():
         button = tk.Button(text = value, command = lambda k = key: self.label_button_action(k, self.label_buttons))
