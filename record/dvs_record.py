@@ -4,320 +4,338 @@ import time
 import tkinter as tk
 from PIL import ImageTk, Image
 import threading
-import time
 import uuid
-import asyncio
-
-
-class CollectionProperties:
-  num_seconds = ""
-  selected_label = "EMPTY_LABEL" 
-  label_dict : dict
-  time_dict : dict
-  def __init__(self) :
-    self.label_dict = {1 : "Label 1", 2 : "Label 2", 3 : "Label 3"}
-    self.time_dict = {1 : "5 Seconds", 2 : "7 Seconds", 3 : "10 Seconds" ,4 : "20 Seconds"}
-
-  def set_seconds(self, seconds):
-      self.num_seconds = seconds
-
-  def set_label(self, label):
-    self.selected_label = label
-
-  def set_property(self, input_str : str):
-    if (str(input_str) in self.label_dict.values()):
-    # if self.label_dict.values str(input_str):
-      self.set_label(input_str)
-    else:
-      print("label selected" + str(input_str))
-      self.set_seconds(input_str)
-  def get_seconds(self):
-    return int(self.num_seconds.split(" ")[0])
-
-class GUI:
-  root : tk.Tk 
-  text_label : tk.Label
-  response_counter : int
-  question_list = []
-  response_list = []
-  frame : tk.Label
-  label_buttons : dict[int, tk.Button]
-  time_buttons : dict[int, tk.Button]
-  properties : CollectionProperties
-  recording : bool
-  def __init__(self):
-    self.label_buttons = {}
-    self.time_buttons = {}
-    self.question_list = ["How many seconds would you like to record?", 
-                          "Which of the following classes is being recorded?", 
-                          "What is your name?"]
-    self.counter = 0
-    self.properties = CollectionProperties()
-    self.recording = False
-  def run(self):
-
-    self.root = tk.Tk()
-    self.root.title = "DVS Data Collection"
-    intro_label = tk.Label(master = self.root, text = "Hello, Welcome to DVS Data Collection!")
-    intro_label.pack(pady = 10)
-    self.top_frame = tk.Frame(master = self.root)
-    self.top_frame.pack(expand=True)
-    self.left_top_frame = tk.Frame(master = self.top_frame)
-    self.left_top_frame.pack(side = "left", padx= 5)
-    self.count_down_frame = tk.Frame(master = self.top_frame)
-    self.count_down_frame.pack(side = "right", padx = 5)
-
-    self.right_top_frame = tk.Frame(master = self.top_frame)
-    self.right_top_frame.pack(anchor = tk.CENTER, side= 'right', padx=5)
-    self.middle_top_frame = tk.Frame(master = self.top_frame, bg = "black") 
-    self.middle_top_frame.pack(side = "right")
-
-    self.count_down_label = tk.Label(master = self.count_down_frame, text = "", font = ("Arial", 100, "bold"))
-    self.count_down_label.pack(side= 'top', padx = 20)
-
-
-    for key, value in self.properties.label_dict.items():
-        button = tk.Button(master = self.left_top_frame, text = value, width = 20 ,command = lambda k = key, v = value: self.label_button_action(k, v, self.label_buttons))
-        button.pack()
-        self.label_buttons[key] = button
-        # button.grid(row = key, column = 0)
-    for key, value in self.properties.time_dict.items():
-
-        button = tk.Button(master = self.middle_top_frame, text = value, width = 20, command = lambda k = key, v = value: self.label_button_action(k, v, self.time_buttons))
-        button.pack()
-        self.time_buttons[key] = button
-        # button.grid(row = key, column = 1)
-
-    record_button = tk.Button(master = self.right_top_frame, anchor = tk.CENTER, text = "Record", command = self.start_recording)
-    record_button.pack(side='right', anchor= tk.CENTER)
-
-    self.frame = tk.Label(self.root, image = None)
-
-    self.frame.pack(side = "bottom")
-    self.root.grid_columnconfigure(0, weight=1)
-    self.root.grid_columnconfigure(1, weight=1)
-
-    # self.root.geometry("1000x1000")
-    self.root.mainloop()
-
-
-
-  def start_recording(self):
-    start_time = time.time()
-    while(time.time() - start_time < 3):
-      self.count_down_label.config(text = str(round(abs(3- (time.time() - start_time)))), foreground = "red")
-      self.root.update()
-    # for i in range(4):
-    #   self.count_down_frame.update()
-      # time.sleep(1)
-    self.recording = True
-    print(self.recording)
-
-  def label_button_action(self, key, value, buttons):
-    curr_button = buttons[key]
-    # if curr_button.cget("relief") == tk.SUNKEN
-    curr_button.config(relief=tk.SUNKEN, activebackground = "lightgreen", bg = "green")
-    for dict_key, button in buttons.items():
-      if dict_key != key:
-        button.config(relief = tk.RAISED,bg='#f0f0f0')
-    print(key)
-    self.properties.set_property(value)
-    return 
-
-
-  def update_frame(self, image):
-    if (image is None):
-      return
-
-    try:
-      img_tk = ImageTk.PhotoImage(image = image)
-      self.frame.config(image = img_tk)
-      self.frame.image = img_tk
-    except:
-      print("INVALID")
-
-  def recording_count_down(self):
-    start_time = time.time()
-    while(time.time() - start_time < self.properties.get_seconds()):
-      self.count_down_label.config(text = str(round(abs(self.properties.get_seconds()- (time.time() - start_time)))), foreground = "green")
-      self.root.update()
-
-
-    
-
-
-
-
-
-class Camera :
-
-  num_sec : int = 10
-  label : str = "l1"
-  curr_frame = None
-  recording : bool
-  last_recording : list
-  save_data : list
-  def __init__(self):
-    self.recording = False
-    self.last_recording = []
-    # self.gui = GUI()
-    pass
-
-
-  def open_cam(self):
-    print("Opening Camera...",end="")
-    cam = cv2.VideoCapture(0)
-    ret, frame = cam.read()
-    # ADDED CODE
-    fps = cam.get(cv2.CAP_PROP_FPS)
-    print("####" + str(fps))
-
-    if ret: 
-      print("Complete")
-      return cam, frame.shape[0], frame.shape[1], int(round(fps))
-    else: 
-      print("Failure")
-      print("Please check camera!")
-      print("Exiting...")
-      quit()
-
-
-  def dvs(self, pre, cur, t=0.05,
-          light=[162, 249, 84], 
-          dark=[255, 139, 237]):
-
-    light = list(map(lambda t: t / 255., light))
-    dark = list(map(lambda t: t / 255., dark))
-
-    diff = np.mean(cur - pre, axis=-1)
-    diff = np.where( np.abs(diff) < t, 0, diff)
-    
-    data = np.zeros(shape=(1, 2, diff.shape[0], diff.shape[1]), dtype=bool)
-    data[0, 0, diff > 0] = True
-    data[0, 1, diff < 0] = True
-
-    color = np.zeros_like(cur)
-    color[diff > 0, :] = light
-    color[diff < 0, :] = dark
-
-
-    return data, color
-    
-
-  def camera_preview(self) :
-    print("INSIDE COLLECTION")
-    # User Settings
-    # num_seconds, label = self.settings()
-
-    # Open Camera
-    cam, img_h, img_w, fps = self.open_cam()
-    num_frames = self.num_sec * fps
-    print("FPS" + str(fps), "number of frame: " + str(num_frames))
-    # data = np.zeros(shape=(num_frames, 2, img_h, img_w), dtype=bool)
-    # Set up frames
-    # print("Opening Preview [Press to (r)ecord or (q)uit. IN THE PREVIEW NOT TERMINAL]")
-    _, frame = cam.read()
-
-    prev = np.ones_like(frame) * (frame / 255.)
-
-    while (True):
-      # print("INSIDE THE CAMERA LOOP")
-      _, frame = cam.read()
-      frame = np.array(frame, np.float32) / 255.
-      _, color = self.dvs(prev, frame, t=0.05)    
-      # shape is (480, 640, 3)
-      array_uint8 = (color * 255).astype(np.uint8)
-      img = Image.fromarray(array_uint8)
-      self.curr_frame = img
-      prev = frame
-      if self.recording:
-        return
-
-
-  def camera_recording(self, num_sec):
-
-    cam, img_h, img_w, fps = self.open_cam()
-    num_frames = num_sec * fps
-    print("FPS : " + str(fps), "number of frame: " + str(num_frames))
-    self.save_data = np.zeros(shape=(num_frames, 2, img_h, img_w), dtype=bool)
-    # Set up frames
-    _, frame = cam.read()
-    prev = np.ones_like(frame) * (frame / 255.)
-    print("Recording...           ", end="\r")
-    start = time.time() 
-    for i in range(num_frames):    
-      _, frame = cam.read()
-      frame = np.array(frame, np.float32) / 255.
-      spikes, color = self.dvs(prev, frame, t=0.05)    
-      array_uint8 = (color * 255).astype(np.uint8)
-      img = Image.fromarray(array_uint8)
-      self.curr_frame = img
-      self.last_recording.append(img)
-      self.save_data[i] = spikes
-      prev = frame
-    end = time.time()
-    print(end - start, "seconds")
-
-    
-
-
-
-  def show_recording(self):
-    print("IN SHOW RECORIDNG")
-    index = 0
-    while(index < len(self.last_recording)):
-      print(index)
-      # TODO change to 1 / fps
-      time.sleep( 1 / 30)
-      self.curr_frame = self.last_recording[index]
-      index += 1
-
-
-class Manager:
-  gui : GUI
-  camera : Camera
-
-
-  def __init__(self):
-    self.gui = GUI()
-    self.camera = Camera()
-
-
-
-  def save_recording(self):
-    saving_path = "./" + str(uuid.uuid1()) + str(self.gui.properties.selected_label)
-    # print("Saving Data...", end="\r")
-    print("IN MANAGER SAVING DATA ...")
-    np.savez_compressed(saving_path, x=self.camera.save_data, y=np.array([self.gui.properties.selected_label]))
-
-
-  def update_loop(self):
-    while (True):
-      self.gui.update_frame(self.camera.curr_frame)
-      if (self.gui.recording):
-        self.camera.recording = True
-
-  def camera_managing(self):
-    while(True):
-      self.camera.camera_preview()
-      # self.gui.recording_count_down()
-      counting_thread = threading.Thread(target = self.gui.recording_count_down)
-      counting_thread.start()
-      self.camera.camera_recording(self.gui.properties.get_seconds())
-      self.camera.show_recording()
-      self.save_recording()
-      print("END OF CAMERA MANAGING ...")
-
-  def run(self): 
-    thread1 = threading.Thread(target = self.camera_managing)
-    thread1.start()
-
-    thread2 = threading.Thread(target = self.update_loop)
-    thread2.start()
-
-    self.gui.run()
-    # self.gui.update_frame(self.camera.curr_frame)
+
+class RecordingSettings:
+    def __init__(self):
+        self.duration = ""
+        self.selected_label = "EMPTY_LABEL"
+        self.label_options = {1: "Label 1", 2: "Label 2", 3: "Label 3"}
+        self.duration_options = {1: "5 Seconds", 2: "7 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
+        self.username = ""
+
+    def set_duration(self, duration):
+        self.duration = duration
+
+    def set_label(self, label):
+        self.selected_label = label
+
+    def set_username(self, username):
+        self.username = username
+
+    def update_setting(self, input_str):
+        if input_str in self.label_options.values():
+            self.set_label(input_str)
+        else:
+            self.set_duration(input_str)
+
+    def get_duration_seconds(self):
+        return int(self.duration.split(" ")[0])
+
+class DVSInterface:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.frame_display = None
+        self.label_buttons = {}
+        self.duration_buttons = {}
+        self.settings = RecordingSettings()
+        self.is_recording = False
+        self.countdown_label = None
+        self.replaying = False
+
+    def setup_ui(self):
+        self.root.title("DVS Data Collection")
+        self._create_username_screen()
+
+    def _create_username_screen(self):
+        self.root.geometry("800x600")  # Set the window size to match the main screen
+        
+        username_frame = tk.Frame(self.root)
+        username_frame.pack(expand=True)
+
+        username_label = tk.Label(username_frame, text="Enter your name:", font=("Arial", 16))
+        username_label.pack(pady=20)
+
+        username_entry = tk.Entry(username_frame, font=("Arial", 14), width=30)
+        username_entry.pack(pady=20)
+
+        submit_button = tk.Button(username_frame, text="Submit", command=lambda: self._submit_username(username_entry.get()), font=("Arial", 14), width=15)
+        submit_button.pack(pady=20)
+        
+        # Bind the Enter key to the submit function
+        username_entry.bind('<Return>', lambda event: self._submit_username(username_entry.get()))
+
+    def _submit_username(self, username):
+        if username:
+            self.settings.set_username(username)
+            for widget in self.root.winfo_children():
+                widget.destroy()
+            self._create_main_screen()
+
+    def _create_main_screen(self):
+        self._create_frames()
+        self._create_buttons()
+        self._create_display()
+
+    def _create_frames(self):
+        intro_label = tk.Label(self.root, text=f"Welcome to DVS Data Collection, {self.settings.username}!")
+        intro_label.pack(pady=10)
+
+        top_frame = tk.Frame(self.root)
+        top_frame.pack(expand=True)
+
+        self.left_frame = tk.Frame(top_frame)
+        self.left_frame.pack(side="left", padx=5)
+
+        self.countdown_frame = tk.Frame(top_frame)
+        self.countdown_frame.pack(side="right", padx=5)
+
+        self.right_frame = tk.Frame(top_frame)
+        self.right_frame.pack(anchor=tk.CENTER, side='right', padx=5)
+
+        self.middle_frame = tk.Frame(top_frame, bg="black")
+        self.middle_frame.pack(side="right")
+
+    def _create_buttons(self):
+        self.countdown_label = tk.Label(self.countdown_frame, text="", font=("Arial", 100, "bold"))
+        self.countdown_label.pack(side='top', padx=20)
+
+        for key, value in self.settings.label_options.items():
+            button = tk.Button(self.left_frame, text=value, width=20,
+                               command=lambda k=key, v=value: self._on_button_click(k, v, self.label_buttons))
+            button.pack()
+            self.label_buttons[key] = button
+
+        for key, value in self.settings.duration_options.items():
+            button = tk.Button(self.middle_frame, text=value, width=20,
+                               command=lambda k=key, v=value: self._on_button_click(k, v, self.duration_buttons))
+            button.pack()
+            self.duration_buttons[key] = button
+
+        button_frame = tk.Frame(self.right_frame)
+        button_frame.pack(side='bottom', anchor=tk.CENTER)
+        record_button = tk.Button(button_frame, text="Record", command=self.start_recording, width=10)
+        record_button.pack(side='top', pady=5)
+
+        save_button = tk.Button(button_frame, text="Save", command=self.save_recording, width=10)
+        save_button.pack(side='top', pady=5)
+
+        delete_button = tk.Button(button_frame, text="Delete", command=self.delete_recording, width=10)
+        delete_button.pack(side='top', pady=5)
+
+    def delete_recording(self):
+      DVSManager.get_instance().delete_recording()
+
+    def save_recording(self):
+      DVSManager.get_instance().save_recording()
+
+    def _create_display(self):
+        self.frame_display = tk.Label(self.root, image=None)
+        self.frame_display.pack(side="bottom", pady=20)  # Added padding to the bottom
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+
+    def start(self):
+        self.root.mainloop()
+
+    def on_closing(self):
+        self.running = False
+
+    def start_recording(self):
+        start_time = time.time()
+        while time.time() - start_time < 3:
+            remaining = round(3 - (time.time() - start_time))
+            self.countdown_label.config(text=str(remaining), foreground="red")
+            self.root.update()
+        self.is_recording = True
+        print(self.is_recording)
+
+    def _on_button_click(self, key, value, buttons):
+        buttons[key].config(relief=tk.SUNKEN, activebackground="lightgreen", bg="green")
+        for other_key, button in buttons.items():
+            if other_key != key:
+                button.config(relief=tk.RAISED, bg='#f0f0f0')
+        self.settings.update_setting(value)
+
+    def update_display(self, image):
+        if image is None:
+            return
+        try:
+            img_tk = ImageTk.PhotoImage(image=image)
+            self.frame_display.config(image=img_tk)
+            self.frame_display.image = img_tk
+        except:
+            print("Invalid image")
+
+    def show_recording_countdown(self):
+        start_time = time.time()
+        duration = self.settings.get_duration_seconds()
+        while time.time() - start_time < duration:
+            remaining = round(duration - (time.time() - start_time))
+            self.countdown_label.config(text=str(remaining), foreground="green")
+            self.root.update()
+
+class DVSCamera:
+    def __init__(self):
+        self.current_frame = None
+        self.is_recording = False
+        self.recorded_frames = []
+        self.recorded_data = None
+
+    def open_camera(self):
+        print("Opening Camera...", end="")
+        cam = cv2.VideoCapture(0)
+        ret, frame = cam.read()
+        fps = cam.get(cv2.CAP_PROP_FPS)
+        print(f"FPS: {fps}")
+
+        if ret:
+            print("Complete")
+            return cam, frame.shape[0], frame.shape[1], int(round(fps))
+        else:
+            print("Failure")
+            print("Please check camera!")
+            print("Exiting...")
+            quit()
+
+    def process_dvs(self, prev, curr, threshold=0.05, light=[162, 249, 84], dark=[255, 139, 237]):
+        light = [c / 255. for c in light]
+        dark = [c / 255. for c in dark]
+
+        diff = np.mean(curr - prev, axis=-1)
+        diff = np.where(np.abs(diff) < threshold, 0, diff)
+
+        data = np.zeros(shape=(1, 2, diff.shape[0], diff.shape[1]), dtype=bool)
+        data[0, 0, diff > 0] = True
+        data[0, 1, diff < 0] = True
+
+        color = np.zeros_like(curr)
+        color[diff > 0, :] = light
+        color[diff < 0, :] = dark
+
+        return data, color
+
+    def preview(self):
+        print("Starting preview...")
+        cam, _, _, fps = self.open_camera()
+        _, frame = cam.read()
+        prev = np.ones_like(frame) * (frame / 255.)
+
+        while not self.is_recording:
+            _, frame = cam.read()
+            frame = np.array(frame, np.float32) / 255.
+            _, color = self.process_dvs(prev, frame, threshold=0.05)
+            array_uint8 = (color * 255).astype(np.uint8)
+            self.current_frame = Image.fromarray(array_uint8)
+            prev = frame
+
+        cam.release()
+
+    def record(self, duration):
+        print(f"Recording for {duration} seconds...")
+        cam, height, width, fps = self.open_camera()
+        num_frames = duration * fps
+        self.recorded_data = np.zeros(shape=(num_frames, 2, height, width), dtype=bool)
+
+        _, frame = cam.read()
+        prev = np.ones_like(frame) * (frame / 255.)
+
+        start_time = time.time()
+        for i in range(num_frames):
+            _, frame = cam.read()
+            frame = np.array(frame, np.float32) / 255.
+            spikes, color = self.process_dvs(prev, frame, threshold=0.05)
+            array_uint8 = (color * 255).astype(np.uint8)
+            img = Image.fromarray(array_uint8)
+            self.current_frame = img
+            self.recorded_frames.append(img)
+            self.recorded_data[i] = spikes
+            prev = frame
+
+        end_time = time.time()
+        print(f"Recording completed in {end_time - start_time:.2f} seconds")
+        self.is_recording = False
+        cam.release()
+
+    def playback_recording(self):
+        print("Playing back recording...")
+        for i, frame in enumerate(self.recorded_frames):
+            time.sleep(1 / 30)  # Assuming 30 FPS playback
+            DVSManager.get_instance().interface.update_display(frame)
+            self.current_frame = frame
+
+class DVSManager:
+    instance = None
+
+    @staticmethod
+    def get_instance():
+        if DVSManager.instance is None:
+            DVSManager.instance = DVSManager()
+        return DVSManager.instance
+
+    def __init__(self):
+        self.interface = DVSInterface()
+        self.camera = DVSCamera()
+        self.recoding_ended = True
+        self.trial_number = 0
+
+    def get_recorded_frames(self):
+        return self.camera.recorded_frames
+
+    def save_recording(self):
+        username = self.interface.settings.username
+        label = self.interface.settings.selected_label
+        unique_id = str(uuid.uuid4())[:4]  # Take first 4 characters of UUID
+        filename = f"./{username}_{"Trial"+str(self.trial_number)}_{label}_{unique_id}"
+        print("Saving recorded data...")
+        boolean_data = self.camera.recorded_data.astype(bool)
+        np.savez_compressed(filename, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
+        self.recoding_ended = True
+        self.trial_number += 1
+
+    def delete_recording(self):
+        self.camera.recorded_frames = []
+        self.recoding_ended = True
+
+    def update_display(self):
+        while True:
+            self.interface.update_display(self.camera.current_frame)
+            # print(self.camera.current_frame)
+            if self.interface.is_recording:
+                self.camera.is_recording = True
+
+
+    def manage_camera(self):
+        while True:
+            if self.recoding_ended:
+              self.recoding_ended = False
+              self.camera.preview()
+              countdown_thread = threading.Thread(target=self.interface.show_recording_countdown)
+              countdown_thread.start()
+              self.camera.record(self.interface.settings.get_duration_seconds())
+              self.camera.playback_recording()
+              while not self.recoding_ended:
+                  pass
+              self.camera.is_recording = False
+              self.interface.is_recording = False
+              countdown_thread.join()
+              print("Recording cycle completed.")
+
+    def run(self):
+        self.interface.setup_ui()
+        
+        camera_thread = threading.Thread(target=self.manage_camera)
+        camera_thread.start()
+
+        display_thread = threading.Thread(target=self.update_display)
+        display_thread.start()
+
+        # Set up the window close event
+
+        self.interface.start()
+
+
 
 if __name__ == "__main__":
-  manager = Manager()
-  manager.run()
+    manager = DVSManager.get_instance()
+    manager.run()
