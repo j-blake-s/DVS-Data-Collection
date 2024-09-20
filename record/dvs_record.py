@@ -286,7 +286,7 @@ class DVSManager:
         username = self.interface.settings.username
         label = self.interface.settings.selected_label
         unique_id = str(uuid.uuid4())[:4]  # Take first 4 characters of UUID
-        filename = f"./{username}_{"Trial"+str(self.trial_number)}_{label}_{unique_id}"
+        filename = f"./{username}_Trial{str(self.trial_number)}_{label}_{unique_id}"
         print("Saving recorded data...")
         boolean_data = self.camera.recorded_data.astype(bool)
         np.savez_compressed(filename, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
