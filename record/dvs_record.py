@@ -5,12 +5,14 @@ import tkinter as tk
 from PIL import ImageTk, Image
 import threading
 import uuid
+import os
 
+save_dir = "data"
 class RecordingSettings:
     def __init__(self):
         self.duration = ""
         self.selected_label = "EMPTY_LABEL"
-        self.label_options = {1: "Label 1", 2: "Label 2", 3: "Label 3"}
+        self.label_options = {1: "Label1", 2: "Label2", 3: "Label3"}
         self.duration_options = {1: "5 Seconds", 2: "7 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
         self.username = ""
 
@@ -287,9 +289,10 @@ class DVSManager:
         label = self.interface.settings.selected_label
         unique_id = str(uuid.uuid4())[:4]  # Take first 4 characters of UUID
         filename = f"./{username}_Trial{str(self.trial_number)}_{label}_{unique_id}"
+        save_path = os.path.join(save_dir, filename)
         print("Saving recorded data...")
         boolean_data = self.camera.recorded_data.astype(bool)
-        np.savez_compressed(filename, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
+        np.savez_compressed(save_path, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
         self.recoding_ended = True
         self.trial_number += 1
 
