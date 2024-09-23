@@ -3,8 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-data_dir = "raw"
-save_dir = "data_prep/ASL-Signs.npz"
+data_dir = "../raw"
+save_dir = "ASL-Signs.npz"
 dirs = os.listdir(data_dir)
 
 
