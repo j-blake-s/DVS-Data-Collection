@@ -47,6 +47,11 @@ class DVSInterface:
         self.root.title("DVS Data Collection")
         self._create_username_screen()
 
+    def on_closing(self):
+        print("Closing interface...")
+        self.root.quit()
+        self.root.destroy()
+
     def _create_username_screen(self):
         self.root.geometry("800x600")  # Set the window size to match the main screen
         
@@ -64,6 +69,7 @@ class DVSInterface:
         
         # Bind the Enter key to the submit function
         username_entry.bind('<Return>', lambda event: self._submit_username(username_entry.get()))
+        username_entry.focus_set()
 
     def _submit_username(self, username):
         if username:
@@ -123,11 +129,17 @@ class DVSInterface:
         delete_button = tk.Button(button_frame, text="Delete", command=self.delete_recording, width=10)
         delete_button.pack(side='top', pady=5)
 
+        replay_button = tk.Button(button_frame, text="Replay", command=self.show_replay, width=10)
+        replay_button.pack(side='top', pady=5)
+
     def delete_recording(self):
       DVSManager.get_instance().delete_recording()
 
     def save_recording(self):
       DVSManager.get_instance().save_recording()
+
+    def show_replay(self):
+      self.replaying = True
 
     def _create_display(self):
         self.frame_display = tk.Label(self.root, image=None)
@@ -136,6 +148,7 @@ class DVSInterface:
         self.root.grid_columnconfigure(1, weight=1)
 
     def start(self):
+        # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
 
     def on_closing(self):
@@ -291,6 +304,7 @@ class DVSManager:
         boolean_data = self.camera.recorded_data.astype(bool)
         np.savez_compressed(filename, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
         self.recoding_ended = True
+        self.camera.recorded_frames = []
         self.trial_number += 1
 
     def delete_recording(self):
@@ -300,9 +314,11 @@ class DVSManager:
     def update_display(self):
         while True:
             self.interface.update_display(self.camera.current_frame)
-            # print(self.camera.current_frame)
             if self.interface.is_recording:
                 self.camera.is_recording = True
+
+    def show_replay(self):
+        self.camera.playback_recording()
 
 
     def manage_camera(self):
@@ -315,11 +331,15 @@ class DVSManager:
               self.camera.record(self.interface.settings.get_duration_seconds())
               self.camera.playback_recording()
               while not self.recoding_ended:
-                  pass
+                  print("Waiting for recording to end...")
+                  if self.interface.replaying:
+                      self.camera.playback_recording()
+                      self.interface.replaying = False
               self.camera.is_recording = False
               self.interface.is_recording = False
               countdown_thread.join()
               print("Recording cycle completed.")
+
 
     def run(self):
         self.interface.setup_ui()
@@ -329,8 +349,6 @@ class DVSManager:
 
         display_thread = threading.Thread(target=self.update_display)
         display_thread.start()
-
-        # Set up the window close event
 
         self.interface.start()
 
