@@ -7,14 +7,14 @@ import threading
 import uuid
 import os
 
-save_dir = "data"
 class RecordingSettings:
     def __init__(self):
         self.duration = ""
         self.selected_label = "EMPTY_LABEL"
         self.label_options = {1: "Label1", 2: "Label2", 3: "Label3"}
-        self.duration_options = {1: "5 Seconds", 2: "7 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
+        self.duration_options = {1: "2 Seconds", 2: "7 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
         self.username = ""
+        self.save_dir = "data"
 
     def set_duration(self, duration):
         self.duration = duration
@@ -44,6 +44,8 @@ class DVSInterface:
         self.is_recording = False
         self.countdown_label = None
         self.replaying = False
+        self.running = True
+
 
     def setup_ui(self):
         self.root.title("DVS Data Collection")
@@ -51,8 +53,12 @@ class DVSInterface:
 
     def on_closing(self):
         print("Closing interface...")
+        self.running = False
+        DVSManager.get_instance().shut_down()
+        time.sleep(1)
         self.root.quit()
         self.root.destroy()
+        print("DVSManager shut down")
 
     def _create_username_screen(self):
         self.root.geometry("800x600")  # Set the window size to match the main screen
@@ -105,8 +111,13 @@ class DVSInterface:
         self.middle_frame.pack(side="right")
 
     def _create_buttons(self):
-        self.countdown_label = tk.Label(self.countdown_frame, text="", font=("Arial", 100, "bold"))
+        self.countdown_label = tk.Label(self.countdown_frame, text="Hey", font=("Arial", 72, "bold"))
         self.countdown_label.pack(side='top', padx=20)
+        # Set constant size and adjust text size based on it
+        # self.countdown_label = tk.Label(self.countdown_frame, text="", width=10, height=3, font=("Arial", 120, "bold"))
+        # self.countdown_label.configure(anchor="center")
+        # self.countdown_label.bind("<Configure>", lambda e: self.countdown_label.config(font=("Arial", min(e.width // 3, e.height // 3), "bold")))
+        # self.countdown_label.pack(side='top', padx=20, pady=20, expand=True, fill='both')
 
         for key, value in self.settings.label_options.items():
             button = tk.Button(self.left_frame, text=value, width=20,
@@ -134,6 +145,28 @@ class DVSInterface:
         replay_button = tk.Button(button_frame, text="Replay", command=self.show_replay, width=10)
         replay_button.pack(side='top', pady=5)
 
+    def start_recording(self):
+        start_time = time.time()
+        while time.time() - start_time < 3:
+            remaining = round(3 - (time.time() - start_time))
+            self.countdown_label.config(text=str(remaining), foreground="red")
+            self.root.update()
+        
+        self.countdown_label.config(text="Go!", foreground="green")
+        self.root.update()
+        time.sleep(0.5)  # Show "Go!" for half a second
+        self.countdown_label.config(text="")
+        self.is_recording = True
+
+        duration = self.settings.get_duration_seconds()
+        print(duration)
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            remaining = round(duration - (time.time() - start_time))
+            self.countdown_label.config(text=str(remaining), foreground="green")
+            self.root.update()
+        print("Countdown ended")
+
     def delete_recording(self):
       DVSManager.get_instance().delete_recording()
 
@@ -150,20 +183,11 @@ class DVSInterface:
         self.root.grid_columnconfigure(1, weight=1)
 
     def start(self):
-        # self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.root.mainloop()
 
-    def on_closing(self):
-        self.running = False
 
-    def start_recording(self):
-        start_time = time.time()
-        while time.time() - start_time < 3:
-            remaining = round(3 - (time.time() - start_time))
-            self.countdown_label.config(text=str(remaining), foreground="red")
-            self.root.update()
-        self.is_recording = True
-        print(self.is_recording)
+
 
     def _on_button_click(self, key, value, buttons):
         buttons[key].config(relief=tk.SUNKEN, activebackground="lightgreen", bg="green")
@@ -173,6 +197,9 @@ class DVSInterface:
         self.settings.update_setting(value)
 
     def update_display(self, image):
+        if not self.running:
+            print("not running")
+            return
         if image is None:
             return
         try:
@@ -180,15 +207,20 @@ class DVSInterface:
             self.frame_display.config(image=img_tk)
             self.frame_display.image = img_tk
         except:
-            print("Invalid image")
+            # print("Invalid image")
+            pass
+        # print("in update display after interface update")
 
-    def show_recording_countdown(self):
-        start_time = time.time()
-        duration = self.settings.get_duration_seconds()
-        while time.time() - start_time < duration:
-            remaining = round(duration - (time.time() - start_time))
-            self.countdown_label.config(text=str(remaining), foreground="green")
-            self.root.update()
+
+
+    # def show_recording_countdown(self):
+    #     start_time = time.time()
+    #     duration = self.settings.get_duration_seconds()
+    #     while time.time() - start_time < duration:
+    #         remaining = round(duration - (time.time() - start_time))
+    #         self.countdown_label.config(text=str(remaining), foreground="green")
+    #         self.root.update()
+    #     print("Countdown ended")
 
 class DVSCamera:
     def __init__(self):
@@ -196,6 +228,9 @@ class DVSCamera:
         self.is_recording = False
         self.recorded_frames = []
         self.recorded_data = None
+
+    def check_running(self):
+        return DVSManager.get_instance().running
 
     def open_camera(self):
         print("Opening Camera...", end="")
@@ -236,7 +271,7 @@ class DVSCamera:
         _, frame = cam.read()
         prev = np.ones_like(frame) * (frame / 255.)
 
-        while not self.is_recording:
+        while not self.is_recording and self.check_running():
             _, frame = cam.read()
             frame = np.array(frame, np.float32) / 255.
             _, color = self.process_dvs(prev, frame, threshold=0.05)
@@ -247,6 +282,8 @@ class DVSCamera:
         cam.release()
 
     def record(self, duration):
+        if not self.check_running():
+            return
         print(f"Recording for {duration} seconds...")
         cam, height, width, fps = self.open_camera()
         num_frames = duration * fps
@@ -273,6 +310,8 @@ class DVSCamera:
         cam.release()
 
     def playback_recording(self):
+        if not self.check_running():
+            return
         print("Playing back recording...")
         for i, frame in enumerate(self.recorded_frames):
             time.sleep(1 / 30)  # Assuming 30 FPS playback
@@ -293,6 +332,16 @@ class DVSManager:
         self.camera = DVSCamera()
         self.recoding_ended = True
         self.trial_number = 0
+        self.running = True
+
+    def shut_down(self):
+        self.running = False
+        self.recoding_ended = True
+        # time.sleep(3)
+        # quit()
+
+        
+
 
     def get_recorded_frames(self):
         return self.camera.recorded_frames
@@ -302,7 +351,7 @@ class DVSManager:
         label = self.interface.settings.selected_label
         unique_id = str(uuid.uuid4())[:4]  # Take first 4 characters of UUID
         filename = f"./{username}_Trial{str(self.trial_number)}_{label}_{unique_id}"
-        save_path = os.path.join(save_dir, filename)
+        save_path = os.path.join(self.interface.settings.save_dir, filename)
         print("Saving recorded data...")
         boolean_data = self.camera.recorded_data.astype(bool)
         np.savez_compressed(save_path, x=boolean_data, y=np.array([self.interface.settings.selected_label]))
@@ -315,34 +364,45 @@ class DVSManager:
         self.recoding_ended = True
 
     def update_display(self):
-        while True:
+        while self.running:
+            # print("in update display")
             self.interface.update_display(self.camera.current_frame)
+
             if self.interface.is_recording:
                 self.camera.is_recording = True
+        print("update display ended")
+
 
     def show_replay(self):
         self.camera.playback_recording()
 
 
     def manage_camera(self):
-        while True:
+        while self.running:
             if self.recoding_ended:
               self.recoding_ended = False
               self.camera.preview()
-              countdown_thread = threading.Thread(target=self.interface.show_recording_countdown)
-              countdown_thread.start()
-              self.camera.record(self.interface.settings.get_duration_seconds())
-              self.camera.playback_recording()
-              while not self.recoding_ended:
+            #   countdown_thread = threading.Thread(target=self.interface.show_recording_countdown)
+            #   countdown_thread.start()
+            seconds = 0
+            try:
+                seconds = self.interface.settings.get_duration_seconds()
+            except:
+                print("Error getting duration seconds")
+
+            self.camera.record(seconds)
+            self.camera.playback_recording()
+            while not self.recoding_ended and self.running:
                   print("Waiting for recording to end...")
                   if self.interface.replaying:
                       self.camera.playback_recording()
                       self.interface.replaying = False
-              self.camera.is_recording = False
-              self.interface.is_recording = False
-              countdown_thread.join()
-              print("Recording cycle completed.")
-
+            self.camera.is_recording = False
+            self.interface.is_recording = False
+            #   countdown_thread.join()
+            print("Recording cycle completed.")
+            print(self.running)
+        print("manage camera ended")
 
     def run(self):
         self.interface.setup_ui()
@@ -353,10 +413,16 @@ class DVSManager:
         display_thread = threading.Thread(target=self.update_display)
         display_thread.start()
 
+
         self.interface.start()
-
-
+        camera_thread.join()
+        print("camera thread joined")
+        display_thread.join()
+        print("Threads joined")
 
 if __name__ == "__main__":
     manager = DVSManager.get_instance()
     manager.run()
+    
+    
+    print("Program ended")
