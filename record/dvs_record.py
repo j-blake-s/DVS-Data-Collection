@@ -157,12 +157,29 @@ class DVSInterface:
         self.replay_button.pack(side='top', pady=5)
 
     def start_recording(self):
+        self.disable_buttons()
         self._countdown(3, "red", "Go!")
         self.is_recording = True
         duration = self.settings.get_duration_seconds()
         self._countdown(duration, "green", "End!")
         print("Countdown ended")
         self._update_button_states(record=tk.DISABLED, others=tk.NORMAL)
+
+
+
+
+
+    def disable_buttons(self):
+        for button in self.label_buttons.values():
+            button.config(state=tk.DISABLED)
+        for button in self.duration_buttons.values():
+            button.config(state=tk.DISABLED)
+
+    def enable_buttons(self):
+        for button in self.label_buttons.values():
+            button.config(state=tk.NORMAL)
+        for button in self.duration_buttons.values():
+            button.config(state=tk.NORMAL)
 
     def _countdown(self, duration, color, final_text):
         start_time = time.time()
@@ -186,11 +203,13 @@ class DVSInterface:
         DVSManager.get_instance().delete_recording()
         self.reset_buttons()
         self.countdown_label.config(text="Deleted!", font=("Arial", 30))
+        self.enable_buttons()
 
     def save_recording(self):
         DVSManager.get_instance().save_recording()
         self.reset_buttons()
         self.countdown_label.config(text="Saved!", font=("Arial", 30))
+        self.enable_buttons()
 
     def show_replay(self):
         self.replaying = True
