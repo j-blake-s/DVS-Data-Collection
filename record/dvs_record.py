@@ -7,6 +7,17 @@ import threading
 import uuid
 import os
 import signal
+from Customization import RoundedButton
+# Primary Color: Deep Sky Blue
+# Hex: #00BFFF
+# Secondary Color: Light Coral
+# Hex: #F08080
+# Background Color: Ghost White
+# Hex: #F8F8FF
+# Text Color: Dark Slate Gray
+# Hex: #2F4F4F
+# Accent Color: Gold
+# Hex: #FFD700
 
 class RecordingSettings:
     def __init__(self):
@@ -78,18 +89,19 @@ class DVSInterface:
         print("DVSManager shut down")
 
     def _create_username_screen(self):
-        self.root.geometry("1024x768")
+        self.root.geometry("1280x1024")
+        self.root.configure(bg="#F8F8FF")
         
-        username_frame = tk.Frame(self.root)
+        username_frame = tk.Frame(self.root, bg="#F8F8FF")
         username_frame.pack(expand=True)
 
-        username_label = tk.Label(username_frame, text="Enter your name:", font=("Arial", 16))
+        username_label = tk.Label(username_frame, text="Enter your name:", font=("Arial", 16), bg="#F8F8FF", fg="#2F4F4F")
         username_label.pack(pady=20)
 
-        username_entry = tk.Entry(username_frame, font=("Arial", 14), width=30)
+        username_entry = tk.Entry(username_frame, font=("Arial", 14), width=30, bg="#FFFFFF", fg="#2F4F4F")
         username_entry.pack(pady=20)
 
-        submit_button = tk.Button(username_frame, text="Submit", command=lambda: self._submit_username(username_entry.get()), font=("Arial", 14), width=15)
+        submit_button = RoundedButton(username_frame, 150, 50, 10, 2, "#00BFFF", "Submit", command=lambda: self._submit_username(username_entry.get()), bg="#FFD700", fg="#2F4F4F")
         submit_button.pack(pady=20)
         
         username_entry.bind('<Return>', lambda event: self._submit_username(username_entry.get()))
@@ -108,66 +120,68 @@ class DVSInterface:
         self._create_display()
 
     def _create_frames(self):
-        intro_label = tk.Label(self.root, text=f"Welcome to DVS Data Collection, {self.settings.username}!")
+        intro_label = tk.Label(self.root, text=f"Welcome to DVS Data Collection, {self.settings.username}!", bg="#F8F8FF", fg="#2F4F4F")
         intro_label.pack(pady=10)
 
-        top_frame = tk.Frame(self.root)
+        top_frame = tk.Frame(self.root, bg="#F8F8FF")
         top_frame.pack(expand=True)
 
-        self.left_frame = tk.Frame(top_frame)
+        self.left_frame = tk.Frame(top_frame, bg="#F8F8FF")
         self.left_frame.pack(side="left", padx=5)
 
-        self.countdown_frame = tk.Frame(top_frame)
+        self.countdown_frame = tk.Frame(top_frame, bg="#F8F8FF")
         self.countdown_frame.pack(side="right", padx=5)
 
-        self.right_frame = tk.Frame(top_frame)
+        self.right_frame = tk.Frame(top_frame, bg="#F8F8FF")
         self.right_frame.pack(anchor=tk.CENTER, side='right', padx=5)
 
-        self.middle_frame = tk.Frame(top_frame, bg="black")
+        self.middle_frame = tk.Frame(top_frame, bg="#F8F8FF")
         self.middle_frame.pack(side="right")
 
     def _create_buttons(self):
-        self.countdown_label = tk.Label(self.countdown_frame, text="", font=("Arial", 72, "bold"))
+        self.countdown_label = tk.Label(self.countdown_frame, text="", font=("Arial", 72, "bold"), bg="#F8F8FF", fg="#2F4F4F")
         self.countdown_label.pack(side='top', padx=20)
 
         for key, value in self.settings.label_options.items():
-            button = tk.Button(self.left_frame, text=value, width=20,
-                               command=lambda k=key, v=value: self._on_button_click(k, v, self.label_buttons))
-            button.pack()
+            button = RoundedButton(self.left_frame, 150, 40, 8, 2, "#f0f0f0", value, command=lambda k=key, v=value: self._on_button_click(k, v, self.label_buttons), bg="#FFD700", fg="#2F4F4F")
+            button.pack(pady=3)
             self.label_buttons[key] = button
 
         for key, value in self.settings.duration_options.items():
-            button = tk.Button(self.middle_frame, text=value, width=20,
-                               command=lambda k=key, v=value: self._on_button_click(k, v, self.duration_buttons))
-            button.pack()
+            button = RoundedButton(self.middle_frame, 150, 40, 8, 2, "#f0f0f0", value, command=lambda k=key, v=value: self._on_button_click(k, v, self.duration_buttons), bg="#FFD700", fg="#2F4F4F")
+            button.pack(pady=3)
             self.duration_buttons[key] = button
 
-        button_frame = tk.Frame(self.right_frame)
+        button_frame = tk.Frame(self.right_frame, bg="#F8F8FF")
         button_frame.pack(side='bottom', anchor=tk.CENTER)
-        self.record_button = tk.Button(button_frame, text="Record", command=self.start_recording, width=10)
-        self.record_button.pack(side='top', pady=5)
 
-        self.save_button = tk.Button(button_frame, text="Save", command=self.save_recording, width=10, state=tk.DISABLED)
-        self.save_button.pack(side='top', pady=5)
+        self.record_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Record", command=self.start_recording, bg="#FFD700", fg="#2F4F4F")
+        self.record_button.pack(side='top', pady=3)
 
-        self.delete_button = tk.Button(button_frame, text="Delete", command=self.delete_recording, width=10, state=tk.DISABLED)
-        self.delete_button.pack(side='top', pady=5)
+        self.save_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Save", command=self.save_recording, bg="#FFD700", fg="#2F4F4F")
+        self.save_button.pack(side='top', pady=3)
+        self.save_button.disable_action()
 
-        self.replay_button = tk.Button(button_frame, text="Replay", command=self.show_replay, width=10, state=tk.DISABLED)
-        self.replay_button.pack(side='top', pady=5)
+        self.delete_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Delete", command=self.delete_recording, bg="#FFD700", fg="#2F4F4F")
+        self.delete_button.pack(side='top', pady=3)
+        self.delete_button.disable_action()
 
+        self.replay_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Replay", command=self.show_replay, bg="#FFD700", fg="#2F4F4F")
+        self.replay_button.pack(side='top', pady=3)
+        self.replay_button.disable_action()
     def start_recording(self):
         self.disable_buttons()
+        # self.record_button.disable_action()
+        self.save_button.disable_action()
+        self.delete_button.disable_action()
+        self.replay_button.disable_action()
+
         self._countdown(3, "red", "Go!")
         self.is_recording = True
         duration = self.settings.get_duration_seconds()
         self._countdown(duration, "green", "End!")
         print("Countdown ended")
         self._update_button_states(record=tk.DISABLED, others=tk.NORMAL)
-
-
-
-
 
     def disable_buttons(self):
         for button in self.label_buttons.values():
@@ -177,10 +191,9 @@ class DVSInterface:
 
     def enable_buttons(self):
         for button in self.label_buttons.values():
-            button.config(state=tk.NORMAL)
+            button.enable_action()
         for button in self.duration_buttons.values():
-            button.config(state=tk.NORMAL)
-
+            button.enable_action()
     def _countdown(self, duration, color, final_text):
         start_time = time.time()
         while time.time() - start_time < duration:
@@ -191,10 +204,14 @@ class DVSInterface:
             self.root.update()
 
     def _update_button_states(self, record, others):
-        self.record_button.config(state=record)
-        self.save_button.config(state=others)
-        self.delete_button.config(state=others)
-        self.replay_button.config(state=others)
+        # self.record_button.config(state=record)
+        # self.save_button.config(state=others)
+        # self.delete_button.config(state=others)
+        # self.replay_button.config(state=others)
+        self.record_button.disable_action()
+        self.save_button.enable_action()
+        self.delete_button.enable_action()
+        self.replay_button.enable_action()
 
     def reset_buttons(self):
         self._update_button_states(record=tk.NORMAL, others=tk.DISABLED)
@@ -202,21 +219,29 @@ class DVSInterface:
     def delete_recording(self):
         DVSManager.get_instance().delete_recording()
         self.reset_buttons()
-        self.countdown_label.config(text="Deleted!", font=("Arial", 30))
+        self.countdown_label.config(text="Deleted!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
+        self.record_button.enable_action()
 
     def save_recording(self):
         DVSManager.get_instance().save_recording()
         self.reset_buttons()
-        self.countdown_label.config(text="Saved!", font=("Arial", 30))
+        self.countdown_label.config(text="Saved!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
+        self.record_button.enable_action()
 
     def show_replay(self):
         self.replaying = True
 
     def _create_display(self):
-        self.frame_display = tk.Label(self.root, image=None)
-        self.frame_display.pack(side="bottom", pady=20)
+        # Create a frame with a border
+        frame_border = tk.Frame(self.root, borderwidth=5, bg="#00BFFF")  # Deep Sky Blue border
+        frame_border.pack(side="bottom", pady=20)
+
+        # Create the display label inside the border frame
+        self.frame_display = tk.Label(frame_border, image=None, bg="#F8F8FF")  # Ghost White background
+        self.frame_display.pack()
+
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_columnconfigure(1, weight=1)
 
@@ -225,10 +250,14 @@ class DVSInterface:
         self.root.mainloop()
 
     def _on_button_click(self, key, value, buttons):
-        buttons[key].config(relief=tk.SUNKEN, activebackground="lightgreen", bg="green")
+        # buttons[key].config(relief=tk.SUNKEN, bg="#00BFFF")
+        buttons[key].change_foreground_color("#2F4F4F")
         for other_key, button in buttons.items():
             if other_key != key:
-                button.config(relief=tk.RAISED, bg='#f0f0f0')
+                # button.config(relief=tk.RAISED, bg='#FFD700')
+                # button.change_foreground_color("#2F4F4F")
+                button.disable_action()
+
         self.settings.update_setting(value)
 
     def update_display(self, image):
