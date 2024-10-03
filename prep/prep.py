@@ -71,4 +71,4 @@ def prep_data(data_dir,save_dir):
   # Save
   np.savez_compressed(save_dir, tX=trainX, tY=trainY, vX=testX, vY=testY)
 
-prep_data("data", "ASL-Signs.npz")
+prep_data("/home/seekingj/data/ASL/raw", "/home/seekingj/data/ASL/ASL.npz")
