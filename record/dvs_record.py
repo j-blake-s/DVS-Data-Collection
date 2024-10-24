@@ -22,7 +22,7 @@ from Customization import RoundedButton
 class RecordingSettings:
     def __init__(self):
         self.duration = ""
-        self.selected_label = "EMPTY_LABEL"
+        self.selected_label = ""
         self.label_options = {
             0: "Tuesday",
             1: "Bathroom",
@@ -47,6 +47,9 @@ class RecordingSettings:
 
     def set_username(self, username):
         self.username = username
+
+    def have_info(self):
+        return self.username != "" and self.selected_label != "" and self.duration != ""
 
     def update_setting(self, input_str):
         if input_str in self.label_options.values():
@@ -157,7 +160,7 @@ class DVSInterface:
 
         self.record_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Record", command=self.start_recording, bg="#FFD700", fg="#2F4F4F")
         self.record_button.pack(side='top', pady=3)
-
+        self.record_button.disable_action()
         self.save_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Save", command=self.save_recording, bg="#FFD700", fg="#2F4F4F")
         self.save_button.pack(side='top', pady=3)
         self.save_button.disable_action()
@@ -182,6 +185,17 @@ class DVSInterface:
         self._countdown(duration, "green", "End!")
         print("Countdown ended")
         self._update_button_states(record=tk.DISABLED, others=tk.NORMAL)
+
+
+    def disable_action_buttons(self):
+        self.save_button.disable_action()
+        self.delete_button.disable_action()
+        self.replay_button.disable_action()
+
+    def enable_action_buttons(self):
+        self.save_button.enable_action()
+        self.delete_button.enable_action()
+        self.replay_button.enable_action()
 
     def disable_buttons(self):
         for button in self.label_buttons.values():
@@ -222,16 +236,21 @@ class DVSInterface:
         self.countdown_label.config(text="Deleted!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
         self.record_button.enable_action()
+        self.disable_action_buttons()
 
     def save_recording(self):
+        self.save_button.disable_action()
         DVSManager.get_instance().save_recording()
+        self.save_button.enable_action()
         self.reset_buttons()
         self.countdown_label.config(text="Saved!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
         self.record_button.enable_action()
+        self.disable_action_buttons()
 
     def show_replay(self):
         self.replaying = True
+        self.replay_button.disable_action()
 
     def _create_display(self):
         # Create a frame with a border
@@ -259,6 +278,8 @@ class DVSInterface:
                 button.disable_action()
 
         self.settings.update_setting(value)
+        if self.settings.have_info():
+            self.record_button.enable_action()
 
     def update_display(self, image):
         if not self.running or image is None:
@@ -429,6 +450,7 @@ class DVSManager:
                     if self.interface.replaying:
                         self.camera.playback_recording()
                         self.interface.replaying = False
+                        self.interface.replay_button.enable_action()
                 self.camera.is_recording = False
                 self.interface.is_recording = False
                 print("Recording cycle completed.")
