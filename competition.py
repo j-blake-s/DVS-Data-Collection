@@ -8,7 +8,7 @@ def get_file_names(directory):
     return [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
 
 file_names = get_file_names('./data')
-progress = {"Arshia" : -100, "Jinu" : 0, "Hasti" : 0, "MohammadReza" : 0, "Blake" : 0, "Mahsa" : 0,"Hasib" : 0, "Aishneet" : 0, "Peyton" : 0, "Dr. Zand": 0}
+progress = {"Arshia" : -100, "Jinu" : 0, "Hasti" : 0, "MohammadReza" : 0, "Blake" : 0, "Mahsa" : 0,"Hasib" : 0, "Aishneet" : 0, "Peyton" : 0, "Dr. Zand": 0, "Nina" : 0}
 
 for item in file_names:
     for key, value in progress.items():
@@ -77,5 +77,5 @@ plt.tight_layout()
 plt.savefig('./plot.jpeg')
 
 
-subprocess.run(["gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", "file:///home/aeslami/Lab/DVS-Data-Collection/plot.jpeg"])
+subprocess.run(["gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", "/home/aeslami/Lab/DVS-Data-Collection/plot.jpeg"])
 

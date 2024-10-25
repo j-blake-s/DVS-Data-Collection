@@ -35,7 +35,7 @@ class RecordingSettings:
             8: "Hamburger",
             9: "Marriage"
         }
-        self.duration_options = {1: "2 Seconds", 2: "7 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
+        self.duration_options = {1: "2 Seconds", 2: "3 Seconds", 3: "10 Seconds", 4: "20 Seconds"}
         self.username = ""
         self.save_dir = "data"
 
