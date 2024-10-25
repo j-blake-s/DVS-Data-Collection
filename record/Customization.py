@@ -22,7 +22,7 @@ class RoundedButton(tk.Canvas):
         self.active_color = "#00BFFF"  # Primary Color: Deep Sky Blue
         self.root_bg = "#F8F8FF"  # Background Color: Ghost White
         self.bg = "#FFD700"  # Set background color to Gold
-
+        self.text = text
         if cornerradius > 0.5*width:
             print("Error: cornerradius is greater than width.")
             return None
@@ -75,6 +75,13 @@ class RoundedButton(tk.Canvas):
     def enable_action(self):
         self.itemconfig("shape", fill=self.bg, outline=self.bg)
         self.itemconfig("arc", fill=self.bg, outline=self.bg)
+        self.itemconfig("text", fill="#2F4F4F")  # Enabled text color: Dark Slate Gray
+        self.bind("<ButtonPress-1>", self._on_press)
+        self.bind("<ButtonRelease-1>", self._on_release)
+
+    def enable_action_no_color(self):
+        # self.itemconfig("shape", fill=self.bg, outline=self.bg)
+        # self.itemconfig("arc", fill=self.bg, outline=self.bg)
         self.itemconfig("text", fill="#2F4F4F")  # Enabled text color: Dark Slate Gray
         self.bind("<ButtonPress-1>", self._on_press)
         self.bind("<ButtonRelease-1>", self._on_release)

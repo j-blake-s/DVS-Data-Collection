@@ -208,9 +208,20 @@ class DVSInterface:
 
     def enable_buttons(self):
         for button in self.label_buttons.values():
-            button.enable_action()
+            
+        # Check if the button text matches the saved label
+            if button.text == self.settings.selected_label:
+                button.change_foreground_color("#FFD700")
+                button.enable_action_no_color()
+            else:
+                button.enable_action()
+
         for button in self.duration_buttons.values():
-            button.enable_action()
+            if button.text == self.settings.duration:
+                button.change_foreground_color("#FFD700")
+                button.enable_action_no_color()
+            else:
+                button.enable_action()
 
     def _countdown(self, duration, color, final_text):
         start_time = time.time()
@@ -232,7 +243,7 @@ class DVSInterface:
 
     def delete_recording(self):
         DVSManager.get_instance().delete_recording()
-        self.reset_buttons()
+        # self.reset_buttons()
         self.countdown_label.config(text="Deleted!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
         self.record_button.enable_action()
@@ -242,7 +253,7 @@ class DVSInterface:
         self.save_button.disable_action()
         DVSManager.get_instance().save_recording()
         self.save_button.enable_action()
-        self.reset_buttons()
+        # self.reset_buttons()
         self.countdown_label.config(text="Saved!", font=("Arial", 30), bg="#F8F8FF", fg="#2F4F4F")
         self.enable_buttons()
         self.record_button.enable_action()
