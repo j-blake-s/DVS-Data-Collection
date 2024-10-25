@@ -287,7 +287,6 @@ class DVSInterface:
             self.frame_display.image = img_tk
         except:
             pass
-
 class DVSCamera:
     def __init__(self):
         self.current_frame = None
