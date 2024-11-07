@@ -101,3 +101,7 @@ class DVSCamera:
             time.sleep(1 / 30)  # Assuming 30 FPS playback
             self.update_display(frame)
             self.current_frame = frame
+
+    def get_frame(self):
+        """Returns the current frame being displayed"""
+        return self.current_frame

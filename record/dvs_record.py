@@ -135,6 +135,10 @@ class DVSInterface:
         bottom_frame = tk.Frame(self.root, bg="#F8F8FF")
         bottom_frame.pack(expand=True)
 
+        # New frame for action buttons
+        self.action_button_frame = tk.Frame(bottom_frame, bg="#F8F8FF")
+        self.action_button_frame.pack(side='top', fill='x', pady=10)
+
         self.left_frame = tk.Frame(bottom_frame, bg="#F8F8FF")
         self.left_frame.pack(side="left", padx=5)
 
@@ -147,7 +151,10 @@ class DVSInterface:
         self.middle_frame = tk.Frame(bottom_frame, bg="#F8F8FF")
         self.middle_frame.pack(side="right")
 
+        # return action_button_frame  # Return this frame to use in _create_buttons
+
     def _create_buttons(self):
+        # action_button_frame = self._create_frames()  # Get the frame for action buttons
         self.countdown_label = tk.Label(self.countdown_frame, text="", font=("Arial", 72, "bold"), bg="#F8F8FF", fg="#2F4F4F")
         self.countdown_label.pack(side='top', padx=20)
 
@@ -165,19 +172,20 @@ class DVSInterface:
         button_frame = tk.Frame(self.right_frame, bg="#F8F8FF")
         button_frame.pack(side='bottom', anchor=tk.CENTER)
 
-        self.record_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Record", command=self.start_recording, bg="#FFD700", fg="#2F4F4F")
-        self.record_button.pack(side='top', padx=3)
+        self.record_button = RoundedButton(self.action_button_frame, 150, 40, 8, 2, "#f0f0f0", "Record", command=self.start_recording, bg="#FFD700", fg="#2F4F4F")
+        self.record_button.pack(side='left', padx=3)
         self.record_button.disable_action()
-        self.save_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Save", command=self.save_recording, bg="#FFD700", fg="#2F4F4F")
-        self.save_button.pack(side='top', padx=3)
+
+        self.save_button = RoundedButton(self.action_button_frame, 150, 40, 8, 2, "#f0f0f0", "Save", command=self.save_recording, bg="#FFD700", fg="#2F4F4F")
+        self.save_button.pack(side='left', padx=3)
         self.save_button.disable_action()
 
-        self.delete_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Delete", command=self.delete_recording, bg="#FFD700", fg="#2F4F4F")
-        self.delete_button.pack(side='top', padx=3)
+        self.delete_button = RoundedButton(self.action_button_frame, 150, 40, 8, 2, "#f0f0f0", "Delete", command=self.delete_recording, bg="#FFD700", fg="#2F4F4F")
+        self.delete_button.pack(side='left', padx=3)
         self.delete_button.disable_action()
 
-        self.replay_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Replay", command=self.show_replay, bg="#FFD700", fg="#2F4F4F")
-        self.replay_button.pack(side='top', padx=3)
+        self.replay_button = RoundedButton(self.action_button_frame, 150, 40, 8, 2, "#f0f0f0", "Replay", command=self.show_replay, bg="#FFD700", fg="#2F4F4F")
+        self.replay_button.pack(side='left', padx=3)
         self.replay_button.disable_action()
 
     def start_recording(self):
