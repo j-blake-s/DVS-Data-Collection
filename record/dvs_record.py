@@ -8,6 +8,7 @@ import uuid
 import os
 import signal
 from Customization import RoundedButton
+from camera import DVSCamera
 # Primary Color: Deep Sky Blue
 # Hex: #00BFFF
 # Secondary Color: Light Coral
@@ -78,6 +79,7 @@ class DVSInterface:
         self.countdown_label = None
         self.replaying = False
         self.running = True
+        self.settings.set_duration("3 Seconds")  # Set default duration to 3 seconds
 
     def setup_ui(self):
         self.root.title("DVS Data Collection")
@@ -151,30 +153,31 @@ class DVSInterface:
 
         for key, value in self.settings.label_options.items():
             button = RoundedButton(self.left_frame, 150, 40, 8, 2, "#f0f0f0", value, command=lambda k=key, v=value: self._on_button_click(k, v, self.label_buttons), bg="#FFD700", fg="#2F4F4F")
-            button.pack(pady=3)
+            button.pack(pady=3, side='left')
             self.label_buttons[key] = button
 
-        for key, value in self.settings.duration_options.items():
-            button = RoundedButton(self.middle_frame, 150, 40, 8, 2, "#f0f0f0", value, command=lambda k=key, v=value: self._on_button_click(k, v, self.duration_buttons), bg="#FFD700", fg="#2F4F4F")
-            button.pack(pady=3)
-            self.duration_buttons[key] = button
+        # Commenting out the creation of duration buttons
+        # for key, value in self.settings.duration_options.items():
+        #     button = RoundedButton(self.middle_frame, 150, 40, 8, 2, "#f0f0f0", value, command=lambda k=key, v=value: self._on_button_click(k, v, self.duration_buttons), bg="#FFD700", fg="#2F4F4F")
+        #     button.pack(pady=3)
+        #     self.duration_buttons[key] = button
 
         button_frame = tk.Frame(self.right_frame, bg="#F8F8FF")
         button_frame.pack(side='bottom', anchor=tk.CENTER)
 
         self.record_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Record", command=self.start_recording, bg="#FFD700", fg="#2F4F4F")
-        self.record_button.pack(side='top', pady=3)
+        self.record_button.pack(side='top', padx=3)
         self.record_button.disable_action()
         self.save_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Save", command=self.save_recording, bg="#FFD700", fg="#2F4F4F")
-        self.save_button.pack(side='top', pady=3)
+        self.save_button.pack(side='top', padx=3)
         self.save_button.disable_action()
 
         self.delete_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Delete", command=self.delete_recording, bg="#FFD700", fg="#2F4F4F")
-        self.delete_button.pack(side='top', pady=3)
+        self.delete_button.pack(side='top', padx=3)
         self.delete_button.disable_action()
 
         self.replay_button = RoundedButton(button_frame, 150, 40, 8, 2, "#f0f0f0", "Replay", command=self.show_replay, bg="#FFD700", fg="#2F4F4F")
-        self.replay_button.pack(side='top', pady=3)
+        self.replay_button.pack(side='top', padx=3)
         self.replay_button.disable_action()
 
     def start_recording(self):
@@ -298,101 +301,7 @@ class DVSInterface:
             self.frame_display.image = img_tk
         except:
             pass
-class DVSCamera:
-    def __init__(self):
-        self.current_frame = None
-        self.is_recording = False
-        self.recorded_frames = []
-        self.recorded_data = None
 
-    def check_running(self):
-        return DVSManager.get_instance().running
-
-    def open_camera(self):
-        print("Opening Camera...", end="")
-        cam = cv2.VideoCapture(0)
-        ret, frame = cam.read()
-        fps = cam.get(cv2.CAP_PROP_FPS)
-        print(f"FPS: {fps}")
-
-        if ret:
-            print("Complete")
-            return cam, frame.shape[0], frame.shape[1], int(round(fps))
-        else:
-            print("Failure")
-            print("Please check camera!")
-            print("Exiting...")
-            quit()
-
-    def process_dvs(self, prev, curr, threshold=0.05, light=[162, 249, 84], dark=[255, 139, 237]):
-        light = [c / 255. for c in light]
-        dark = [c / 255. for c in dark]
-
-        diff = np.mean(curr - prev, axis=-1)
-        diff = np.where(np.abs(diff) < threshold, 0, diff)
-
-        data = np.zeros(shape=(1, 2, diff.shape[0], diff.shape[1]), dtype=bool)
-        data[0, 0, diff > 0] = True
-        data[0, 1, diff < 0] = True
-
-        color = np.zeros_like(curr)
-        color[diff > 0, :] = light
-        color[diff < 0, :] = dark
-
-        return data, color
-
-    def preview(self):
-        print("Starting preview...")
-        cam, _, _, fps = self.open_camera()
-        _, frame = cam.read()
-        prev = np.ones_like(frame) * (frame / 255.)
-
-        while not self.is_recording and self.check_running():
-            _, frame = cam.read()
-            frame = np.array(frame, np.float32) / 255.
-            _, color = self.process_dvs(prev, frame, threshold=0.05)
-            array_uint8 = (color * 255).astype(np.uint8)
-            self.current_frame = Image.fromarray(array_uint8)
-            prev = frame
-
-        cam.release()
-
-    def record(self, duration):
-        if not self.check_running():
-            return
-        print(f"Recording for {duration} seconds...")
-        cam, height, width, fps = self.open_camera()
-        num_frames = duration * fps
-        self.recorded_data = np.zeros(shape=(2, height, width, num_frames), dtype=bool)
-
-        _, frame = cam.read()
-        prev = np.ones_like(frame) * (frame / 255.)
-
-        start_time = time.time()
-        for i in range(num_frames):
-            _, frame = cam.read()
-            frame = np.array(frame, np.float32) / 255.
-            spikes, color = self.process_dvs(prev, frame, threshold=0.05)
-            array_uint8 = (color * 255).astype(np.uint8)
-            img = Image.fromarray(array_uint8)
-            self.current_frame = img
-            self.recorded_frames.append(img)
-            self.recorded_data[:, :, :, i] = spikes
-            prev = frame
-
-        end_time = time.time()
-        print(f"Recording completed in {end_time - start_time:.2f} seconds")
-        self.is_recording = False
-        cam.release()
-
-    def playback_recording(self):
-        if not self.check_running():
-            return
-        print("Playing back recording...")
-        for frame in self.recorded_frames:
-            time.sleep(1 / 30)  # Assuming 30 FPS playback
-            DVSManager.get_instance().interface.update_display(frame)
-            self.current_frame = frame
 
 class DVSManager:
     instance = None
@@ -405,7 +314,9 @@ class DVSManager:
 
     def __init__(self):
         self.interface = DVSInterface()
-        self.camera = DVSCamera()
+        # Update to use DVSCamera with callbacks
+        self.camera = DVSCamera(update_display_callback=self.interface.update_display,
+                                check_running_callback=self.check_running)
         self.recording_ended = True
         self.trial_number = 0
         self.running = True
@@ -478,6 +389,9 @@ class DVSManager:
         print("camera thread joined")
         display_thread.join()
         print("Threads joined")
+
+    def check_running(self):
+        return self.running
 
 if __name__ == "__main__":
     manager = DVSManager.get_instance()
