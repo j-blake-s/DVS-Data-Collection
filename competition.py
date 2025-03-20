@@ -77,5 +77,11 @@ plt.tight_layout()
 plt.savefig('./plot.jpeg')
 
 
-subprocess.run(["gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", "/home/aeslami/Lab/DVS-Data-Collection/plot.jpeg"])
+# Get the absolute path of the current working directory
+current_dir = os.path.abspath(os.getcwd())
+wallpaper_path = os.path.join(current_dir, 'plot.jpeg')
+
+# Update the wallpaper using the absolute path
+subprocess.run(["gsettings", "set", "org.gnome.desktop.background", "picture-uri-dark", f"file://{wallpaper_path}"])
+subprocess.run(["gsettings", "set", "org.gnome.desktop.background", "picture-uri", f"file://{wallpaper_path}"])
 
