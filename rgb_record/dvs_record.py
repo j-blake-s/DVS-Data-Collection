@@ -8,6 +8,15 @@ import uuid
 import os
 import signal
 
+def rgb_to_bgr(frame):
+
+    frame_ = np.zeros_like(frame)
+    frame_[:,:,0] = frame[:,:,2]
+    frame_[:,:,1] = frame[:,:,1]
+    frame_[:,:,2] = frame[:,:,0]
+
+    return frame_
+
 class RecordingSettings:
     def __init__(self):
         self.duration = ""
@@ -282,7 +291,7 @@ class DVSCamera:
         color[diff > 0, :] = light
         color[diff < 0, :] = dark
 
-        return data, color
+        return data, curr
 
     def preview(self):
         print("Starting preview...")
@@ -292,10 +301,12 @@ class DVSCamera:
 
         while not self.is_recording and self.check_running():
             _, frame = cam.read()
-            frame = np.array(frame, np.float32) / 255.
-            _, color = self.process_dvs(prev, frame, threshold=0.05)
-            array_uint8 = (color * 255).astype(np.uint8)
-            self.current_frame = Image.fromarray(array_uint8)
+            frame = rgb_to_bgr(frame)
+
+            # frame = np.array(frame, np.float32) / 255.
+            # _, color = self.process_dvs(prev, frame, threshold=0.05)
+            # array_uint8 = (color * 255).astype(np.uint8)
+            self.current_frame = Image.fromarray(frame)
             prev = frame
 
         cam.release()
@@ -305,23 +316,20 @@ class DVSCamera:
             return
         print(f"Recording for {duration} seconds...")
         cam, height, width, fps = self.open_camera()
-        num_frames = duration * fps
-        self.recorded_data = np.zeros(shape=(2, height, width, num_frames), dtype=bool)
-
-        _, frame = cam.read()
-        prev = np.ones_like(frame) * (frame / 255.)
+        num_frames = (duration * fps) + 1
+        self.recorded_data = np.zeros(shape=(height, width, 3, num_frames))
 
         start_time = time.time()
         for i in range(num_frames):
             _, frame = cam.read()
-            frame = np.array(frame, np.float32) / 255.
-            spikes, color = self.process_dvs(prev, frame, threshold=0.05)
-            array_uint8 = (color * 255).astype(np.uint8)
-            img = Image.fromarray(array_uint8)
+            frame = rgb_to_bgr(frame)
+            # frame = np.array(frame, np.float32) / 255.
+            # spikes, color = self.process_dvs(prev, frame, threshold=0.05)
+            # array_uint8 = (color * 255).astype(np.uint8)
+            img = Image.fromarray(frame)
             self.current_frame = img
             self.recorded_frames.append(img)
-            self.recorded_data[:, :, :, i] = spikes
-            prev = frame
+            self.recorded_data[:, :, :, i] = frame
 
         end_time = time.time()
         print(f"Recording completed in {end_time - start_time:.2f} seconds")
