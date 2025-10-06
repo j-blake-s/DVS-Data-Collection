@@ -36,6 +36,8 @@ class RecordingSettings:
         self.duration_options = {1: "2 Seconds", 2: "3 Seconds", 3: "5 Seconds", 4: "10 Seconds"}
         self.username = ""
         self.save_dir = "data"
+        os.makedirs(self.save_dir, exist_ok=True)
+
 
     def set_duration(self, duration):
         self.duration = duration
