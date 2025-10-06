@@ -299,7 +299,7 @@ class DVSCamera:
         print("Starting preview...")
         cam, _, _, fps = self.open_camera()
         _, frame = cam.read()
-        prev = np.ones_like(frame) * (frame / 255.)
+        # prev = np.ones_like(frame) * (frame / 255.)
 
         while not self.is_recording and self.check_running():
             _, frame = cam.read()
@@ -309,7 +309,7 @@ class DVSCamera:
             # _, color = self.process_dvs(prev, frame, threshold=0.05)
             # array_uint8 = (color * 255).astype(np.uint8)
             self.current_frame = Image.fromarray(frame)
-            prev = frame
+            # prev = frame
 
         cam.release()
 
@@ -324,11 +324,11 @@ class DVSCamera:
         start_time = time.time()
         for i in range(num_frames):
             _, frame = cam.read()
-            frame = rgb_to_bgr(frame)
+            frame_ = rgb_to_bgr(frame)
             # frame = np.array(frame, np.float32) / 255.
             # spikes, color = self.process_dvs(prev, frame, threshold=0.05)
             # array_uint8 = (color * 255).astype(np.uint8)
-            img = Image.fromarray(frame)
+            img = Image.fromarray(frame_)
             self.current_frame = img
             self.recorded_frames.append(img)
             self.recorded_data[:, :, :, i] = frame
@@ -372,12 +372,12 @@ class DVSManager:
         username = self.interface.settings.username
         label = self.interface.settings.selected_label
         unique_id = str(uuid.uuid4())[:4]  # Take first 4 characters of UUID
-        filename = f"{username}{self.trial_number}_{label}_{unique_id}"
+        filename = f"{username}{self.trial_number}_{label}_{unique_id}_rgb"
         save_path = os.path.join(self.interface.settings.save_dir, filename)
         print("Saving recorded data...")
-        boolean_data = self.camera.recorded_data.astype(bool)
+        uint8_data = self.camera.recorded_data.astype(np.uint8)
         label_index = self.interface.settings.get_label_index(label)
-        np.savez_compressed(save_path, x=boolean_data, y=np.array([label_index]))
+        np.savez_compressed(save_path, x=uint8_data, y=np.array([label_index]))
         self.recording_ended = True
         self.camera.recorded_frames = []
         self.trial_number += 1
